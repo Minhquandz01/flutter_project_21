@@ -10,7 +10,7 @@ class CarSalesApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.red, // Màu chủ đạo cho App Ô tô
+        primarySwatch: Colors.red,
         useMaterial3: true,
       ),
       home: const TeamIntroPage(),
@@ -42,8 +42,7 @@ class TeamIntroPage extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Divider(),
             ),
-            
-            // Danh sách thành viên
+          
             memberCard('Nguyễn Văn Quân', '20224113', 'Nhóm trưởng', Icons.stars),
             memberCard('Bùi Bảo Khang', '20224346', 'Thành viên', Icons.person),
             memberCard('Trần Anh Trung', '20224343', 'Thành viên', Icons.person),
