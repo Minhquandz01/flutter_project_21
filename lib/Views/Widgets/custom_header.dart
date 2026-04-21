@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../Controllers/auth_controller.dart';
 import '../auth_view.dart';
-import '../admin_view.dart'; // Nạp trang Admin vào để chuyển tới
-import '../products_view.dart'; // Nạp trang Sản phẩm vào để chuyển tới
 
 class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
   final String activeTab;
@@ -26,12 +24,10 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
             elevation: 1,
             toolbarHeight: 70,
             automaticallyImplyLeading: false,
-            titleSpacing: isDesktop ? 40 : 15, // Căn lề tổng thể
 
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 1. CỤM BÊN TRÁI: Dùng Expanded ép Logo sát lề trái
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -49,11 +45,9 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
 
-                // 2. CỤM Ở GIỮA: Menu chữ (Tự động nằm chính giữa màn hình)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    mainAxisSize: MainAxisSize.min, // Quan trọng: Bắt nó gom gọn lại ở giữa
                     children: [
                       _buildNavText(context, 'Trang chủ', 'home'),
                       _buildNavText(context, 'Sản phẩm', 'products'),
@@ -67,7 +61,6 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
                   ),
                 ),
 
-                // 3. CỤM BÊN PHẢI: Dùng Expanded ép Icon sát lề phải
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -107,15 +100,11 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: InkWell(
         onTap: () {
-          // BƯỚC QUAN TRỌNG: Xử lý chuyển trang khi bấm nút
-          if (isActive) return; // Nếu đang ở chính trang đó rồi thì bấm không có tác dụng gì
 
           if (tabId == 'admin') {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminView()));
-          } else if (tabId == 'products') {
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProductsView()));
           }
-          // Sau này bạn làm thêm trang Trang chủ hay Liên hệ thì cứ viết thêm else if vào đây nhé!
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
