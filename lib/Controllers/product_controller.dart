@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Đã thêm import này
 import '../Models/product_model.dart';
 
 class ProductController extends ChangeNotifier {
@@ -54,5 +55,60 @@ class ProductController extends ChangeNotifier {
   Future<void> deleteProduct(String id) async {
     await _db.collection('products').doc(id).delete();
     await fetchProducts();
+  }
+
+  // ==========================================
+  // --- LOGIC XE YÊU THÍCH (WISHLIST) MỚI THÊM ---
+  // ==========================================
+
+  // Kiểm tra trạng thái tim (Đã thích hay chưa)
+  Stream<bool> isFavorite(String productId) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return Stream.value(false);
+
+    return _db
+        .collection('wishlists')
+        .doc(user.uid)
+        .collection('my_favorites')
+        .doc(productId)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
+
+  // Thêm hoặc xóa xe khỏi Wishlist
+  Future<void> toggleFavorite(ProductModel product) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Yêu cầu đăng nhập
+
+    final docRef = _db
+        .collection('wishlists')
+        .doc(user.uid)
+        .collection('my_favorites')
+        .doc(product.id);
+
+    final doc = await docRef.get();
+    if (doc.exists) {
+      await docRef.delete(); // Đã có thì xóa đi (Bỏ tim)
+    } else {
+      await docRef.set({ // Chưa có thì thêm vào
+        'id': product.id,
+        'name': product.name,
+        'price': product.price,
+        'imageUrl': product.imageUrl,
+        'category': product.category,
+        'addedAt': Timestamp.now(),
+      });
+    }
+  }
+
+  // Lấy danh sách Wishlist để hiển thị trên trang riêng
+  Stream<QuerySnapshot> getWishlist() {
+    final user = FirebaseAuth.instance.currentUser;
+    return _db
+        .collection('wishlists')
+        .doc(user?.uid)
+        .collection('my_favorites')
+        .orderBy('addedAt', descending: true)
+        .snapshots();
   }
 }

@@ -23,19 +23,17 @@ class _ProductsViewState extends State<ProductsView> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
+    double horizontalPadding = isMobile ? 20.0 : 40.0;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),
-      // Nút Chat góc phải
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFCC0000),
         onPressed: () {},
         child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
       ),
-
-      // HEADER
       appBar: const CustomHeader(activeTab: 'products'),
-
-      // NỘI DUNG CHÍNH
       body: ListenableBuilder(
         listenable: _controller,
         builder: (context, child) {
@@ -47,25 +45,25 @@ class _ProductsViewState extends State<ProductsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. HERO SECTION (Tiêu đề lớn) - Đã được khôi phục
+                // 1. HERO SECTION
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(40, 50, 40, 20),
+                  padding: EdgeInsets.fromLTRB(horizontalPadding, isMobile ? 30 : 50, horizontalPadding, 20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Danh sách Xe máy', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Color(0xFF1A1A24))),
+                      Text('Danh sách Xe máy', style: TextStyle(fontSize: isMobile ? 32 : 40, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A24))),
                       const SizedBox(height: 10),
-                      Text('Tìm kiếm chiếc xe hoàn hảo từ bộ sưu tập của chúng tôi', style: TextStyle(fontSize: 18, color: Colors.grey[600])),
+                      Text('Tìm kiếm chiếc xe hoàn hảo từ bộ sưu tập của chúng tôi', style: TextStyle(fontSize: isMobile ? 15 : 18, color: Colors.grey[600])),
                     ],
                   ),
                 ),
 
-                // 2. THANH LỌC DANH MỤC (Nằm trong Card trắng đẹp mắt)
+                // 2. THANH LỌC DANH MỤC
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(25),
+                    padding: EdgeInsets.all(isMobile ? 20 : 25),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(15),
@@ -83,17 +81,18 @@ class _ProductsViewState extends State<ProductsView> {
                         ),
                         const SizedBox(height: 15),
                         Wrap(
-                          spacing: 15,
+                          spacing: 12,
+                          runSpacing: 12,
                           children: _controller.categories.map((cat) {
                             String hienThi = cat == 'All' ? 'Tất cả' : (cat == 'Scooter' ? 'Xe tay ga' : (cat == 'Sport' ? 'Xe thể thao' : 'Xe số'));
                             bool isSelected = _controller.selectedCategory == cat;
 
                             return ChoiceChip(
-                              label: Text(hienThi, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 15)),
+                              label: Text(hienThi, style: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.w600, fontSize: 14)),
                               selected: isSelected,
                               selectedColor: const Color(0xFFCC0000),
                               backgroundColor: Colors.grey[100],
-                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25), side: const BorderSide(color: Colors.transparent)),
                               onSelected: (_) => _controller.filterByCategory(cat),
                             );
@@ -104,11 +103,11 @@ class _ProductsViewState extends State<ProductsView> {
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
-                // 3. LƯỚI HIỂN THỊ SẢN PHẨM (Responsive)
+                // 3. LƯỚI HIỂN THỊ SẢN PHẨM
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       int crossAxisCount = constraints.maxWidth > 1000 ? 3 : (constraints.maxWidth > 700 ? 2 : 1);
@@ -134,13 +133,14 @@ class _ProductsViewState extends State<ProductsView> {
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          crossAxisSpacing: 30,
-                          mainAxisSpacing: 30,
-                          childAspectRatio: 0.72,
+                          crossAxisSpacing: 25,
+                          mainAxisSpacing: 25,
+                          // ĐÃ CHỈNH SỬA Ở ĐÂY: Trên điện thoại cho tỷ lệ 0.65 để thẻ dài ra, không bị tràn
+                          childAspectRatio: isMobile ? 0.62 : 0.75,
                         ),
                         itemCount: displayedProducts.length,
                         itemBuilder: (context, index) {
-                          return _buildProductCard(displayedProducts[index], context);
+                          return _buildProductCard(displayedProducts[index], context, isMobile);
                         },
                       );
                     },
@@ -148,8 +148,6 @@ class _ProductsViewState extends State<ProductsView> {
                 ),
 
                 const SizedBox(height: 60),
-
-                // FOOTER
                 const CustomFooter(),
               ],
             ),
@@ -159,8 +157,8 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
-  // --- THIẾT KẾ CARD SẢN PHẨM (Đã bỏ phần Màu sắc) ---
-  Widget _buildProductCard(ProductModel product, BuildContext context) {
+  // --- THIẾT KẾ CARD SẢN PHẨM CHỐNG TRÀN ---
+  Widget _buildProductCard(ProductModel product, BuildContext context, bool isMobile) {
     return GestureDetector(
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ProductDetailView(product: product))),
       child: Container(
@@ -172,59 +170,68 @@ class _ProductsViewState extends State<ProductsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Khối Hình ảnh
+            // Khối Hình ảnh (Giảm flex xuống một chút để nhường chỗ cho chữ)
             Expanded(
-              flex: 5,
+              flex: 4,
               child: Stack(
                 children: [
                   Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), color: Colors.grey[100]),
+                    decoration: BoxDecoration(borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), color: Colors.white),
                     child: ClipRRect(
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                       child: Image.network(product.imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Center(child: Icon(Icons.two_wheeler, size: 80, color: Colors.black12))),
                     ),
                   ),
-                  // Tem Danh mục
                   Positioned(top: 15, left: 15, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: const Color(0xFF333333), borderRadius: BorderRadius.circular(15)), child: Text(product.category == 'Scooter' ? 'Xe tay ga' : (product.category == 'Sport' ? 'Xe thể thao' : 'Xe số'), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)))),
-                  // Tem Đời xe
                   Positioned(top: 15, right: 15, child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: const Color(0xFFCC0000), borderRadius: BorderRadius.circular(15)), child: Text(product.year, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)))),
                 ],
               ),
             ),
 
-            // Khối Thông tin
+            // Khối Thông tin (Tăng flex để có nhiều không gian hơn)
             Expanded(
               flex: 5,
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(isMobile ? 15 : 20), // Thu nhỏ lề trên điện thoại
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(product.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A24))),
+                    Text(product.name, style: TextStyle(fontSize: isMobile ? 18 : 20, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A24)), maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 8),
-                    Text(product.desc, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.5)),
-
-                    // Đoạn hiển thị Row "Màu sắc" đã được gỡ bỏ hoàn toàn
-
-                    const Spacer(),
+                    // Expanded bọc lấy mô tả để nó chiếm hết chỗ trống dư thừa, đẩy Giá tiền xuống hẳn sát đáy
+                    Expanded(
+                      child: Text(product.desc, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600], fontSize: 13, height: 1.5)),
+                    ),
                     const Divider(color: Colors.black12),
-                    const Spacer(),
+                    const SizedBox(height: 5),
 
                     // Khối Giá bán và Nút mũi tên
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Giá từ', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
-                            const SizedBox(height: 4),
-                            Text(product.price, style: const TextStyle(color: Color(0xFFCC0000), fontSize: 20, fontWeight: FontWeight.bold)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Giá từ', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                              const SizedBox(height: 4),
+                              // Dùng FittedBox bọc lấy Text để giá tự động nhỏ lại nếu số quá dài
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(product.price, style: const TextStyle(color: Color(0xFFCC0000), fontSize: 20, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
+                          ),
                         ),
-                        Container(padding: const EdgeInsets.all(10), decoration: const BoxDecoration(color: Color(0xFFCC0000), shape: BoxShape.circle), child: const Icon(Icons.arrow_forward, color: Colors.white, size: 20))
+                        const SizedBox(width: 10),
+                        Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(color: Color(0xFFCC0000), shape: BoxShape.circle),
+                            child: const Icon(Icons.arrow_forward, color: Colors.white, size: 18)
+                        )
                       ],
                     )
                   ],
