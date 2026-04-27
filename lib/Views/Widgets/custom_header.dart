@@ -4,7 +4,8 @@ import '../auth_view.dart';
 import '../admin_view.dart';
 import '../products_view.dart';
 import '../contact_view.dart';
-import '../wishlist_view.dart';
+import '../cart_view.dart';
+import '../order_history_view.dart';
 
 class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
   final String activeTab;
@@ -16,7 +17,6 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Nếu chiều rộng màn hình > 850 thì mới được coi là Desktop/Máy tính bảng ngang
     bool isDesktop = MediaQuery.of(context).size.width > 850;
 
     return ListenableBuilder(
@@ -29,33 +29,25 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
             elevation: 1,
             toolbarHeight: 70,
             automaticallyImplyLeading: false,
-            titleSpacing: isDesktop ? 40 : 0, // Căn lề nhỏ lại khi ở trên điện thoại
+            titleSpacing: isDesktop ? 40 : 15,
 
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 1. LOGO - Nhấn vào để về trang chủ
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: InkWell(
-                      onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductsView())),
+                      onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProductsView())),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                        decoration: BoxDecoration(
-                            color: const Color(0xFFCC0000),
-                            borderRadius: BorderRadius.circular(8)
-                        ),
-                        child: const Text(
-                            'HONDA',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 1)
-                        ),
+                        decoration: BoxDecoration(color: const Color(0xFFCC0000), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('HONDA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 1)),
                       ),
                     ),
                   ),
                 ),
 
-                // 2. MENU ĐIỀU HƯỚNG (CHỈ HIỆN TRÊN MÁY TÍNH)
                 if (isDesktop)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -70,55 +62,42 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
 
-                // 3. CÁC ICON TIỆN ÍCH BÊN PHẢI & MENU MOBILE
                 Expanded(
                   child: Align(
                     alignment: Alignment.centerRight,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Icon Trái tim (Xe yêu thích)
                         IconButton(
-                            icon: const Icon(Icons.favorite_border, color: Colors.black87),
+                            icon: const Icon(Icons.shopping_cart_outlined, color: Colors.black87),
                             onPressed: () {
                               if (!auth.isLoggedIn) {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập để xem mục yêu thích'), backgroundColor: Colors.orange));
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng đăng nhập để xem giỏ hàng'), backgroundColor: Colors.orange));
                               } else {
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => WishlistView()));
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => const CartView()));
                               }
                             }
                         ),
 
                         const SizedBox(width: 5),
 
-                        // Icon Đăng nhập / Đăng xuất
-                        IconButton(
-                          icon: Icon(
-                              auth.isLoggedIn ? Icons.logout : Icons.person_outline,
-                              color: auth.isLoggedIn ? const Color(0xFFCC0000) : Colors.black87
-                          ),
-                          onPressed: () {
-                            if (auth.isLoggedIn) {
-                              auth.logout();
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã đăng xuất')));
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductsView()));
-                            } else {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => AuthView()));
-                            }
-                          },
+                        auth.isLoggedIn
+                            ? _buildUserMenu(context, auth)
+                            : IconButton(
+                          icon: const Icon(Icons.person_outline, color: Colors.black87),
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthView())),
                         ),
 
-                        // MENU HAMBURGER: CHỈ HIỆN TRÊN ĐIỆN THOẠI (!isDesktop)
                         if (!isDesktop)
                           PopupMenuButton<String>(
                             icon: const Icon(Icons.menu, color: Colors.black87),
-                            offset: const Offset(0, 50), // Đẩy menu drop-down xuống dưới một chút
+                            offset: const Offset(0, 50),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             onSelected: (value) {
                               if (value == activeTab) return;
-                              if (value == 'admin') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminView()));
-                              else if (value == 'contact') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ContactScreen()));
-                              else Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductsView()));
+                              if (value == 'admin') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminView()));
+                              else if (value == 'contact') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
+                              else Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProductsView()));
                             },
                             itemBuilder: (context) => [
                               const PopupMenuItem(value: 'home', child: Text('Trang chủ')),
@@ -138,7 +117,50 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  // Widget tạo từng mục Menu chữ (Dành cho máy tính)
+  // --- MENU KHI NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP (ĐÃ FIX LỖI GẠCH ĐỎ) ---
+  Widget _buildUserMenu(BuildContext context, AuthController auth) {
+    String username = auth.currentUserEmail.split('@')[0].toUpperCase();
+
+    // ĐÃ SỬA: Định nghĩa rõ kiểu <String>
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 50),
+      icon: const Icon(Icons.person, color: Color(0xFFCC0000)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+
+      // ĐÃ SỬA: Định nghĩa rõ kiểu danh sách <PopupMenuEntry<String>>[]
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        PopupMenuItem<String>(
+            enabled: false,
+            value: 'header',
+            child: Text('Chào, $username', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black))
+        ),
+        PopupMenuItem<String>(
+            value: 'history',
+            onTap: () {
+              // Dùng Future.delayed để chờ menu đóng rồi mới chuyển trang (tránh giật)
+              Future.delayed(const Duration(milliseconds: 10), () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const OrderHistoryView()));
+              });
+            },
+            child: const Row(children: [Icon(Icons.receipt_long, size: 18, color: Colors.blue), SizedBox(width: 10), Text('Lịch sử đơn hàng')])
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+            value: 'logout',
+            onTap: () async {
+              await auth.logout();
+              // Dùng Future.delayed để chờ menu đóng hoàn tất
+              Future.delayed(const Duration(milliseconds: 10), () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã đăng xuất')));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProductsView()));
+              });
+            },
+            child: const Row(children: [Icon(Icons.logout, color: Colors.red, size: 18), SizedBox(width: 10), Text('Đăng xuất', style: TextStyle(color: Colors.red))])
+        ),
+      ],
+    );
+  }
+
   Widget _buildNavText(BuildContext context, String text, String tabId) {
     bool isActive = activeTab == tabId;
     return Padding(
@@ -146,28 +168,15 @@ class CustomHeader extends StatelessWidget implements PreferredSizeWidget {
       child: InkWell(
         onTap: () {
           if (isActive) return;
-
-          if (tabId == 'admin') {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => AdminView()));
-          } else if (tabId == 'contact') {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ContactScreen()));
-          } else {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ProductsView()));
-          }
+          if (tabId == 'admin') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AdminView()));
+          else if (tabId == 'contact') Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ContactScreen()));
+          else Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ProductsView()));
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-                text,
-                style: TextStyle(
-                    color: isActive ? const Color(0xFFCC0000) : Colors.grey[800],
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 15
-                )
-            ),
-            if (isActive)
-              Container(margin: const EdgeInsets.only(top: 5), height: 2, width: 25, color: const Color(0xFFCC0000)),
+            Text(text, style: TextStyle(color: isActive ? const Color(0xFFCC0000) : Colors.grey[800], fontWeight: isActive ? FontWeight.bold : FontWeight.w500, fontSize: 15)),
+            if (isActive) Container(margin: const EdgeInsets.only(top: 5), height: 2, width: 25, color: const Color(0xFFCC0000)),
           ],
         ),
       ),

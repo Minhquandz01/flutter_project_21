@@ -21,8 +21,7 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   @override
   Widget build(BuildContext context) {
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ');
-    // Nhận diện thiết bị
-    bool isMobile = MediaQuery.of(context).size.width < 900; // Tăng mốc nhận diện lên 900 cho an toàn
+    bool isMobile = MediaQuery.of(context).size.width < 900;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F8),
@@ -30,7 +29,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // 1. NÚT BACK
             Padding(
               padding: EdgeInsets.fromLTRB(isMobile ? 20 : 40, 30, isMobile ? 20 : 40, 0),
               child: Align(
@@ -44,13 +42,11 @@ class _ProductDetailViewState extends State<ProductDetailView> {
             ),
             const SizedBox(height: 20),
 
-            // 2. PHẦN CHI TIẾT SẢN PHẨM
             Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1200),
                 padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40),
                 child: isMobile
-                // NẾU LÀ ĐIỆN THOẠI -> XẾP DỌC
                     ? Column(
                   children: [
                     _buildImageArea(),
@@ -58,13 +54,12 @@ class _ProductDetailViewState extends State<ProductDetailView> {
                     _buildInfoArea(context, formatter, isMobile),
                   ],
                 )
-                // NẾU LÀ MÁY TÍNH -> XẾP NGANG TỶ LỆ 1:1
                     : Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(flex: 1, child: _buildImageArea()), // Tỷ lệ 1 phần
-                    const SizedBox(width: 50), // Khoảng cách rộng rãi hơn
-                    Expanded(flex: 1, child: _buildInfoArea(context, formatter, isMobile)), // Tỷ lệ 1 phần
+                    Expanded(flex: 1, child: _buildImageArea()),
+                    const SizedBox(width: 50),
+                    Expanded(flex: 1, child: _buildInfoArea(context, formatter, isMobile)),
                   ],
                 ),
               ),
@@ -79,13 +74,11 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-  // --- KHU VỰC ẢNH ĐƯỢC CHỈNH LẠI KHUNG VUÔNG VỨC ---
   Widget _buildImageArea() {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20)]),
       padding: const EdgeInsets.all(40),
-      // Ép ảnh luôn nằm trong khung vuông (1:1) để không bị bè ngang
       child: AspectRatio(
         aspectRatio: 1.0,
         child: ClipRRect(
@@ -96,7 +89,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-  // --- KHU VỰC THÔNG TIN CHỮ ---
   Widget _buildInfoArea(BuildContext context, NumberFormat formatter, bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,12 +105,74 @@ class _ProductDetailViewState extends State<ProductDetailView> {
         const SizedBox(height: 10),
         Text(widget.product.desc, style: TextStyle(fontSize: 15, color: Colors.grey[700], height: 1.6)),
         const SizedBox(height: 40),
-        _buildPriceCard(context, formatter, isMobile),
+
+        // Thẻ bao bọc Giá bán và Nút bấm
+        Container(
+          padding: EdgeInsets.all(isMobile ? 20 : 30),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Giá bán lẻ đề xuất', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+              const SizedBox(height: 5),
+              Text(widget.product.price, style: const TextStyle(color: Color(0xFFCC0000), fontSize: 36, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 25),
+
+              isMobile
+                  ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildBuyBtn(context),
+                  const SizedBox(height: 15),
+                  _buildTestDriveBtn(context),
+                ],
+              )
+                  : Row(
+                children: [
+                  Expanded(child: _buildBuyBtn(context)),
+                  const SizedBox(width: 15),
+                  Expanded(child: _buildTestDriveBtn(context)),
+                ],
+              )
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  // --- HỘP THOẠI LÁI THỬ (Giữ nguyên logic của bạn) ---
+  // --- NÚT MUA HÀNG GỌI FIREBASE ---
+  Widget _buildBuyBtn(BuildContext context) => ElevatedButton.icon(
+    icon: const Icon(Icons.shopping_cart_checkout, color: Colors.white, size: 20),
+    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFCC0000), padding: const EdgeInsets.symmetric(vertical: 22), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+    onPressed: () async {
+      try {
+        await _controller.addToCart(widget.product);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Đã thêm sản phẩm vào giỏ hàng!'),
+            backgroundColor: Colors.green,
+          ));
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ));
+        }
+      }
+    },
+    label: const Text('Mua Hàng', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+  );
+
+  Widget _buildTestDriveBtn(BuildContext context) => ElevatedButton(
+    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[100], elevation: 0, padding: const EdgeInsets.symmetric(vertical: 22), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+    onPressed: () => _showTestDriveDialog(context, widget.product.name),
+    child: const Text('Đăng ký Lái thử', style: TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold)),
+  );
+
+  // --- HỘP THOẠI ĐĂNG KÝ LÁI THỬ ---
   void _showTestDriveDialog(BuildContext context, String bikeName) {
     final nameCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
@@ -202,81 +256,6 @@ class _ProductDetailViewState extends State<ProductDetailView> {
     );
   }
 
-  // --- CARD GIÁ BÁN & NÚT BẤM (ĐÃ FIX LỖI RỚT DÒNG TRÊN MÁY TÍNH) ---
-  Widget _buildPriceCard(BuildContext context, NumberFormat formatter, bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 20 : 30),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.shade200), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 20)]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Giá bán lẻ đề xuất', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
-          const SizedBox(height: 5),
-          Text(widget.product.price, style: const TextStyle(color: Color(0xFFCC0000), fontSize: 36, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 25),
-
-          // NẾU LÀ ĐIỆN THOẠI: XẾP CÁC NÚT DỌC
-          if (isMobile)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch, // Kéo giãn nút full viền
-              children: [
-                _buildEstimateBtn(context, formatter),
-                const SizedBox(height: 15),
-                _buildTestDriveBtn(context),
-                const SizedBox(height: 15),
-                _buildHeartBtn(context, isMobile: true),
-              ],
-            )
-          // NẾU LÀ MÁY TÍNH: XẾP CÁC NÚT NGANG CHUẨN XỊN (KHÔNG BAO GIỜ BỊ RỚT DÒNG)
-          else
-            Row(
-              children: [
-                Expanded(child: _buildEstimateBtn(context, formatter)),
-                const SizedBox(width: 15),
-                Expanded(child: _buildTestDriveBtn(context)),
-                const SizedBox(width: 15),
-                _buildHeartBtn(context, isMobile: false),
-              ],
-            )
-        ],
-      ),
-    );
-  }
-
-  // Tách nhỏ các nút ra cho code gọn gàng
-  Widget _buildEstimateBtn(BuildContext context, NumberFormat formatter) => ElevatedButton(
-    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFCC0000), padding: const EdgeInsets.symmetric(vertical: 22), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-    onPressed: () => _showCostEstimateDialog(context, widget.product, formatter),
-    child: const Text('Dự toán chi phí', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-  );
-
-  Widget _buildTestDriveBtn(BuildContext context) => ElevatedButton(
-    style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[100], elevation: 0, padding: const EdgeInsets.symmetric(vertical: 22), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-    onPressed: () => _showTestDriveDialog(context, widget.product.name),
-    child: const Text('Đăng ký Lái thử', style: TextStyle(color: Colors.black87, fontSize: 15, fontWeight: FontWeight.bold)),
-  );
-
-  Widget _buildHeartBtn(BuildContext context, {required bool isMobile}) => StreamBuilder<bool>(
-      stream: _controller.isFavorite(widget.product.id),
-      builder: (context, snapshot) {
-        bool isFav = snapshot.data ?? false;
-        return InkWell(
-          onTap: () {
-            _controller.toggleFavorite(widget.product);
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(isFav ? 'Đã xóa khỏi mục Yêu thích' : 'Đã thêm vào mục Yêu thích'), backgroundColor: isFav ? Colors.orange : Colors.green, duration: const Duration(seconds: 1),
-            ));
-          },
-          child: Container(
-            width: isMobile ? double.infinity : 65, // Đt thì dài sọc, PC thì hình vuông
-            padding: EdgeInsets.symmetric(vertical: isMobile ? 20 : 20.5), // Căn cho nút cao bằng 2 nút kia
-            decoration: BoxDecoration(border: Border.all(color: isFav ? const Color(0xFFCC0000) : Colors.grey.shade300), borderRadius: BorderRadius.circular(10)),
-            child: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: isFav ? const Color(0xFFCC0000) : Colors.black87, size: 24),
-          ),
-        );
-      }
-  );
-
   Widget _buildRelatedProductsSection(bool isMobile) {
     return Container(
       width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 60), color: Colors.white,
@@ -330,52 +309,4 @@ class _ProductDetailViewState extends State<ProductDetailView> {
   Widget _buildStockInfo(bool isMobile) => Wrap(spacing: 15, runSpacing: 10, children: [_infoTag(Icons.inventory_2, 'Còn hàng: ${widget.product.stock} chiếc', Colors.green), _infoTag(Icons.shopping_cart, 'Đã bán: ${widget.product.sold} chiếc', Colors.blue)]);
 
   Widget _infoTag(IconData icon, String label, Color color) => Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(5)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16, color: color), const SizedBox(width: 5), Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold))]));
-
-  void _showCostEstimateDialog(BuildContext context, ProductModel product, NumberFormat formatter) {
-    int basePrice = int.tryParse(product.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-    String selectedRegion = 'Khu vực I (HN/HCM)';
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-          builder: (context, setStateDialog) {
-            int registrationFee = selectedRegion == 'Khu vực I (HN/HCM)' ? (basePrice * 0.05).toInt() : (basePrice * 0.02).toInt();
-            int licensePlateFee = selectedRegion == 'Khu vực I (HN/HCM)' ? 2000000 : 500000;
-            int insuranceFee = 66000;
-            int totalCost = basePrice + registrationFee + licensePlateFee + insuranceFee;
-
-            return AlertDialog(
-              backgroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), contentPadding: EdgeInsets.zero,
-              content: SizedBox(
-                width: 600,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(width: double.infinity, padding: const EdgeInsets.all(20), decoration: const BoxDecoration(color: Color(0xFFCC0000), borderRadius: BorderRadius.vertical(top: Radius.circular(20))), child: const Center(child: Text('DỰ TOÁN LĂN BÁNH', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)))),
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Nơi đăng ký', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            const SizedBox(height: 10),
-                            DropdownButtonFormField<String>(isExpanded: true, value: selectedRegion, decoration: InputDecoration(filled: true, fillColor: Colors.grey[50], border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[300]!))), items: const [DropdownMenuItem(value: 'Khu vực I (HN/HCM)', child: Text('Khu vực I (Hà Nội, TP.HCM)', overflow: TextOverflow.ellipsis)), DropdownMenuItem(value: 'Khu vực II (Các Tỉnh khác)', child: Text('Khu vực II (Các tỉnh khác)', overflow: TextOverflow.ellipsis))], onChanged: (v) => setStateDialog(() => selectedRegion = v!)),
-                            const SizedBox(height: 20),
-                            _costRow('Giá xe:', formatter.format(basePrice)), _costRow('Phí trước bạ:', formatter.format(registrationFee)), _costRow('Phí biển số:', formatter.format(licensePlateFee)), _costRow('Bảo hiểm:', formatter.format(insuranceFee)),
-                            const Divider(height: 30),
-                            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('TỔNG CỘNG', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), Text(formatter.format(totalCost), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFCC0000)))])
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng'))],
-            );
-          }
-      ),
-    );
-  }
-  Widget _costRow(String t, String v) => Padding(padding: const EdgeInsets.only(bottom: 10), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(t), Text(v, style: const TextStyle(fontWeight: FontWeight.bold))]));
 }

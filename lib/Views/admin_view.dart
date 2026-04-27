@@ -7,6 +7,7 @@ import 'Widgets/custom_footer.dart';
 import 'contact_admin_view.dart';
 import 'test_drive_admin_view.dart';
 import 'dashboard_view.dart';
+import 'admin_orders_view.dart'; // NẠP TRANG ĐƠN HÀNG VÀO ĐÂY
 
 class AdminView extends StatefulWidget {
   const AdminView({super.key});
@@ -43,6 +44,7 @@ class _AdminViewState extends State<AdminView> {
     );
   }
 
+  // ĐÃ SỬA: Thêm logic mở trang Đơn hàng cho Admin
   Widget _buildMainContent(bool isMobile) {
     double padding = isMobile ? 15.0 : 40.0;
 
@@ -52,7 +54,9 @@ class _AdminViewState extends State<AdminView> {
         ? _buildProductManager(isMobile)
         : _selectedSidebarIndex == 2
         ? Padding(padding: EdgeInsets.all(padding), child: const ContactAdminManager())
-        : Padding(padding: EdgeInsets.all(padding), child: const TestDriveAdminManager());
+        : _selectedSidebarIndex == 3
+        ? Padding(padding: EdgeInsets.all(padding), child: const TestDriveAdminManager())
+        : const AdminOrdersView(); // <--- INDEX SỐ 4 LÀ ĐƠN HÀNG
   }
 
   Widget _buildProductManager(bool isMobile) {
@@ -109,13 +113,11 @@ class _AdminViewState extends State<AdminView> {
               builder: (context, _) {
                 if (_controller.isLoading) return const Padding(padding: EdgeInsets.all(60), child: Center(child: CircularProgressIndicator(color: Color(0xFFCC0000))));
 
-                // GIẢI PHÁP ĐẶC TRỊ ÉP BẢNG FULL WIDTH TRÊN PC
                 return LayoutBuilder(
                     builder: (context, constraints) {
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: ConstrainedBox(
-                          // Lệnh này bắt buộc bảng phải rộng ÍT NHẤT bằng màn hình
                           constraints: BoxConstraints(minWidth: constraints.maxWidth),
                           child: DataTable(
                             horizontalMargin: 30, headingRowHeight: 60, dataRowMinHeight: 80, dataRowMaxHeight: 80,
@@ -126,7 +128,7 @@ class _AdminViewState extends State<AdminView> {
                               DataCell(Text(p.price, style: const TextStyle(fontWeight: FontWeight.bold))),
                               DataCell(Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(20)), child: Text('${p.stock} chiếc', style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold)))),
                               DataCell(Row(
-                                  mainAxisSize: MainAxisSize.min, // Chống tràn ngang trên row con
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20), onPressed: () => _showDialog(p: p, isMobile: isMobile)),
                                     IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20), onPressed: () => _controller.deleteProduct(p.id)),
@@ -203,6 +205,7 @@ class _AdminViewState extends State<AdminView> {
     return InputDecoration(labelText: label, suffixText: suffix, suffixIcon: icon != null ? Icon(icon, color: Colors.grey[500]) : null, filled: true, fillColor: Colors.grey[50], enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: Colors.grey[200]!)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFCC0000))));
   }
 
+  // ĐÃ SỬA: Thêm "Quản lý đơn hàng" vào Menu PC
   Widget _buildSidebar() {
     return Container(
         width: 260, color: const Color(0xFF161B22),
@@ -210,7 +213,11 @@ class _AdminViewState extends State<AdminView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Padding(padding: EdgeInsets.fromLTRB(30, 40, 30, 40), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('HONDA', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)), Text('Trang Quản Trị', style: TextStyle(color: Colors.grey, fontSize: 13))])),
-              _sidebarItem(0, Icons.dashboard_outlined, 'Dashboard'), _sidebarItem(1, Icons.inventory_2_outlined, 'Sản phẩm'), _sidebarItem(2, Icons.email_outlined, 'Tin nhắn liên hệ'), _sidebarItem(3, Icons.calendar_today_outlined, 'Lịch lái thử'),
+              _sidebarItem(0, Icons.dashboard_outlined, 'Dashboard'),
+              _sidebarItem(1, Icons.inventory_2_outlined, 'Sản phẩm'),
+              _sidebarItem(2, Icons.email_outlined, 'Tin nhắn liên hệ'),
+              _sidebarItem(3, Icons.calendar_today_outlined, 'Lịch lái thử'),
+              _sidebarItem(4, Icons.payment_outlined, 'Quản lý đơn hàng'), // NÚT THÊM MỚI
             ]
         )
     );
@@ -221,12 +228,21 @@ class _AdminViewState extends State<AdminView> {
     return Container(margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 5), decoration: BoxDecoration(color: active ? const Color(0xFFCC0000) : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: ListTile(leading: Icon(icon, color: active ? Colors.white : Colors.grey[500], size: 20), title: Text(label, style: TextStyle(color: active ? Colors.white : Colors.grey[500], fontWeight: active ? FontWeight.bold : FontWeight.w500, fontSize: 15)), onTap: () => setState(() => _selectedSidebarIndex = index)));
   }
 
+  // ĐÃ SỬA: Thêm "Đơn hàng" vào Menu Điện thoại
   Widget _buildMobileMenu() {
     return Container(
       width: double.infinity, color: const Color(0xFF161B22), padding: const EdgeInsets.symmetric(vertical: 12),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Row(children: [const SizedBox(width: 15), _mobileMenuItem(0, Icons.dashboard_outlined, 'Dashboard'), _mobileMenuItem(1, Icons.inventory_2_outlined, 'Sản phẩm'), _mobileMenuItem(2, Icons.email_outlined, 'Tin nhắn'), _mobileMenuItem(3, Icons.calendar_today_outlined, 'Lịch hẹn'), const SizedBox(width: 15)]),
+        child: Row(children: [
+          const SizedBox(width: 15),
+          _mobileMenuItem(0, Icons.dashboard_outlined, 'Dashboard'),
+          _mobileMenuItem(1, Icons.inventory_2_outlined, 'Sản phẩm'),
+          _mobileMenuItem(2, Icons.email_outlined, 'Tin nhắn'),
+          _mobileMenuItem(3, Icons.calendar_today_outlined, 'Lịch hẹn'),
+          _mobileMenuItem(4, Icons.payment_outlined, 'Đơn hàng'), // NÚT THÊM MỚI
+          const SizedBox(width: 15)
+        ]),
       ),
     );
   }
