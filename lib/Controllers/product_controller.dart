@@ -114,7 +114,18 @@ class ProductController extends ChangeNotifier {
   // Lấy lịch sử đơn hàng của User đang đăng nhập
   Stream<QuerySnapshot> getUserOrders() {
     final user = FirebaseAuth.instance.currentUser;
-    return _db.collection('orders').where('userId', isEqualTo: user?.uid).snapshots();
+    return _db.collection('orders')
+        .where('userId', isEqualTo: user?.uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  // --- LOGIC BẢO DƯỠNG ---
+  Stream<QuerySnapshot> getMaintenanceSchedule() {
+    final user = FirebaseAuth.instance.currentUser;
+    return _db.collection('maintenance')
+        .where('userId', isEqualTo: user?.uid)
+        .snapshots();
   }
 
   // Lấy TOÀN BỘ đơn hàng cho Admin

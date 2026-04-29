@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../Controllers/auth_controller.dart';
+import '../Controllers/product_controller.dart';
 import 'Widgets/custom_header.dart';
 import 'Widgets/custom_footer.dart';
 
@@ -11,6 +14,9 @@ class CustomerDashboardView extends StatefulWidget {
 }
 
 class _CustomerDashboardViewState extends State<CustomerDashboardView> {
+  final ProductController _productController = ProductController();
+  final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'VNĐ');
+
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 1100;
