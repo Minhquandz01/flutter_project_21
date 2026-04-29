@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../Controllers/product_controller.dart';
 import '../Controllers/momo_controller.dart';
+import '../Controllers/auth_controller.dart';
 import 'Widgets/custom_header.dart';
 import 'Widgets/custom_footer.dart';
 import 'payment_result_view.dart'; // ĐÃ NẠP TRANG XỬ LÝ TỰ ĐỘNG
@@ -22,7 +23,6 @@ class _CartViewState extends State<CartView> {
 
   final TextEditingController _couponController = TextEditingController();
   Map<String, dynamic>? _appliedCoupon;
-  int _discountAmount = 0;
 
   void _applyCoupon() async {
     if (_couponController.text.isEmpty) return;
