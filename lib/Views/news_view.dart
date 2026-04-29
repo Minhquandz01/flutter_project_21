@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../Controllers/auth_controller.dart';
 import 'Widgets/custom_header.dart';
 import 'Widgets/custom_footer.dart';
