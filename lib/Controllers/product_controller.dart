@@ -116,7 +116,6 @@ class ProductController extends ChangeNotifier {
     final user = FirebaseAuth.instance.currentUser;
     return _db.collection('orders')
         .where('userId', isEqualTo: user?.uid)
-        .orderBy('createdAt', descending: true)
         .snapshots();
   }
 

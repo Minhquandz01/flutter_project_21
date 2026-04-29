@@ -8,6 +8,7 @@ import 'Widgets/custom_header.dart';
 import 'Widgets/custom_footer.dart';
 import '../Controllers/maintenance_controller.dart';
 import 'Widgets/chat_box.dart';
+import 'cart_view.dart';
 import 'contact_view.dart';
 
 class CustomerDashboardView extends StatefulWidget {
@@ -368,7 +369,14 @@ class _CustomerDashboardViewState extends State<CustomerDashboardView> {
                 );
               }
 
-              final orders = snapshot.data!.docs;
+              final orders = snapshot.data!.docs.toList();
+              // Sắp xếp đơn hàng mới nhất lên đầu (Client-side)
+              orders.sort((a, b) {
+                Timestamp t1 = (a.data() as Map<String, dynamic>)['createdAt'];
+                Timestamp t2 = (b.data() as Map<String, dynamic>)['createdAt'];
+                return t2.compareTo(t1);
+              });
+
               return ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -447,6 +455,17 @@ class _CustomerDashboardViewState extends State<CustomerDashboardView> {
                   spacing: 10,
                   runSpacing: 10,
                   children: [
+                    if (status == 'Chờ thanh toán')
+                      ElevatedButton(
+                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartView())),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFCC0000),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Thanh toán ngay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      ),
                     _actionButton('Chi Tiết', null),
                   ],
                 )

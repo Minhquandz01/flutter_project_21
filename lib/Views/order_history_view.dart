@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../Controllers/product_controller.dart';
+import 'cart_view.dart';
 import 'Widgets/custom_header.dart';
 import 'Widgets/custom_footer.dart';
 
@@ -55,7 +56,14 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                         );
                       }
 
-                      final orders = snapshot.data!.docs;
+                      final orders = snapshot.data!.docs.toList();
+                      // Sắp xếp đơn hàng mới nhất lên đầu (Client-side)
+                      orders.sort((a, b) {
+                        Timestamp t1 = (a.data() as Map<String, dynamic>)['createdAt'];
+                        Timestamp t2 = (b.data() as Map<String, dynamic>)['createdAt'];
+                        return t2.compareTo(t1);
+                      });
+
                       return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -63,7 +71,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                         itemBuilder: (ctx, i) {
                           var order = orders[i].data() as Map<String, dynamic>;
                           String status = order['status'] ?? 'Chờ thanh toán';
-                          bool isSuccess = status == 'Đã thanh toán';
+                          bool isSuccess = status == 'Đã thanh toán' || status == 'Đã nhận xe';
                           DateTime date = (order['createdAt'] as Timestamp).toDate();
 
                           return Card(
@@ -93,7 +101,18 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                                   const Padding(padding: EdgeInsets.symmetric(vertical: 15), child: Divider()),
                                   Text('Ngày đặt hàng: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
                                   const SizedBox(height: 15),
-                                  Text('Tổng tiền: ${formatter.format(order['totalAmount'])}', style: const TextStyle(color: Color(0xFFCC0000), fontSize: 18, fontWeight: FontWeight.bold)),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Tổng tiền: ${formatter.format(order['totalAmount'])}', style: const TextStyle(color: Color(0xFFCC0000), fontSize: 18, fontWeight: FontWeight.bold)),
+                                      if (status == 'Chờ thanh toán')
+                                        ElevatedButton(
+                                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CartView())),
+                                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFCC0000), foregroundColor: Colors.white),
+                                          child: const Text('Thanh toán ngay'),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
